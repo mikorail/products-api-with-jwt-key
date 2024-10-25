@@ -6,4 +6,5 @@ type User struct {
 	Password   string `gorm:"not null"`
 	Role       string `gorm:"not null"`
 	Department string `gorm:"not null"`
+	Active     bool
 }

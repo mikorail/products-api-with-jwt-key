@@ -21,15 +21,8 @@ func main() {
 	}
 	log.Println("Database connected successfully")
 
-	// Setup MemDB
-	mdb, err := config.SetupMemDB()
-	if err != nil {
-		log.Fatalf("Failed to create MemDB: %v", err)
-	}
-	log.Println("MemDB connected successfully")
-
-	// Initialize services with MemDB instead of Redis
-	authService := services.NewAuthService(db, mdb) // Pass MemDB to AuthService
+	// Initialize DB for services
+	authService := services.NewAuthService(db)
 	productService := services.NewProductService(db)
 
 	// Initialize controllers
@@ -39,14 +32,16 @@ func main() {
 	// Initialize router
 	r := gin.Default()
 	r.Use(middlewares.LoggingMiddleware())
+	r.Use(middlewares.RateLimiterMiddleware())
 
 	// Endpoint login (does not require JWT authentication)
 	auth := r.Group("/auth")
 	auth.POST("/login", authController.Login)
+	auth.POST("/logout", authController.Logout)
 
 	// Other endpoints require JWT authentication
 	protected := r.Group("/")
-	protected.Use(middlewares.JWTAuthMiddleware())
+	protected.Use(middlewares.JWTAuthMiddleware(authService))
 
 	// Product endpoints
 	product := protected.Group("/products")

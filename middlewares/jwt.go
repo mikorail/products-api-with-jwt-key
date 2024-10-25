@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"os"
 	"products-api-with-jwt/global"
+	"products-api-with-jwt/models"
+	"products-api-with-jwt/services"
+
 	"strings"
 	"time"
 
@@ -27,11 +30,14 @@ func GenerateToken(username string, expiration time.Duration) (string, error) {
 }
 
 // JWTAuthMiddleware memvalidasi token JWT di header Authorization setiap request
-func JWTAuthMiddleware() gin.HandlerFunc {
+func JWTAuthMiddleware(authService *services.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
+			c.JSON(http.StatusUnauthorized, models.ApiResponse{
+				Status:  "error",
+				Code:    http.StatusBadRequest,
+				Message: "Authorization header required"})
 			c.Abort()
 			return
 		}
@@ -39,7 +45,10 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		// Ambil token dari header Authorization
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		if tokenString == authHeader {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Bearer token required"})
+			c.JSON(http.StatusUnauthorized, models.ApiResponse{
+				Status:  "error",
+				Code:    http.StatusBadRequest,
+				Message: "Bearer token required"})
 			c.Abort()
 			return
 		}
@@ -54,7 +63,10 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+			c.JSON(http.StatusUnauthorized, models.ApiResponse{
+				Status:  "error",
+				Code:    http.StatusBadRequest,
+				Message: "Invalid or expired token"})
 			c.Abort()
 			return
 		}
@@ -62,13 +74,46 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		// Extract claims untuk mengambil informasi user jika diperlukan
 		claims, ok := token.Claims.(*jwt.RegisteredClaims)
 		if !ok || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+			c.JSON(http.StatusUnauthorized, models.ApiResponse{
+				Status:  "error",
+				Code:    http.StatusBadRequest,
+				Message: "Invalid token claims"})
+			c.Abort()
+			return
+		}
+
+		// Check if user is active
+		idCheck, err := authService.GetUserIDFromToken(tokenString)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, models.ApiResponse{
+				Status:  "error",
+				Code:    http.StatusBadRequest,
+				Message: "Userid not found"})
+			c.Abort()
+			return
+		}
+		user, error := authService.GetUserById(int(idCheck))
+		if error != nil {
+			c.JSON(http.StatusUnauthorized, models.ApiResponse{
+				Status:  "error",
+				Code:    http.StatusBadRequest,
+				Message: "User not found"})
+			c.Abort()
+			return
+		}
+
+		// Check if user is active
+		if !user.Active {
+			c.JSON(http.StatusUnauthorized, models.ApiResponse{
+				Status:  "error",
+				Code:    http.StatusBadRequest,
+				Message: "You are not logged in"})
 			c.Abort()
 			return
 		}
 
 		// Menyimpan username atau informasi lain dari token ke context
-		c.Set("username", claims.Subject)
+		c.Set("user_id", claims.Subject)
 		c.Next()
 	}
 }

@@ -2,8 +2,8 @@ package config
 
 import (
 	"products-api-with-jwt/models"
+	"time"
 
-	"github.com/hashicorp/go-memdb"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -17,51 +17,12 @@ func SetupDatabase() (*gorm.DB, error) {
 	}
 
 	// Migrate tables for User and Product models
-	db.AutoMigrate(&models.User{}, &models.Product{})
+	db.AutoMigrate(&models.User{}, &models.Product{}, &models.LoggingHistory{})
 
 	// Populate initial data
 	populateInitialData(db)
 
 	return db, nil
-}
-
-// SetupMemDB initializes the MemDB instance and creates the necessary schema
-func SetupMemDB() (*memdb.MemDB, error) {
-	// Define the schema for the tokens table
-
-	var tokensSchema = &memdb.TableSchema{
-		Name: "token_schemas",
-		Indexes: map[string]*memdb.IndexSchema{
-			"id": {
-				Name:    "id",
-				Unique:  true,
-				Indexer: &memdb.StringFieldIndex{Field: "ID"}, // Ensure this matches the ID field in Token
-			},
-			"user_id": {
-				Name:    "user_id",
-				Unique:  false,
-				Indexer: &memdb.StringFieldIndex{Field: "UserID"}, // Index for UserID
-			},
-			"username": {
-				Name:    "username",
-				Unique:  false,
-				Indexer: &memdb.StringFieldIndex{Field: "Username"}, // Index for Username
-			},
-		},
-	}
-	var Schema = &memdb.DBSchema{
-		Tables: map[string]*memdb.TableSchema{
-			"token_schemas": tokensSchema,
-		},
-	}
-
-	// Create the MemDB instance with the defined schema
-	mdb, err := memdb.NewMemDB(Schema)
-	if err != nil {
-		return nil, err
-	}
-
-	return mdb, nil
 }
 func populateInitialData(db *gorm.DB) {
 	// Check if initial data exists
@@ -73,9 +34,9 @@ func populateInitialData(db *gorm.DB) {
 
 		// Add example users
 		users := []models.User{
-			{Username: "admin", Password: string(passwordHash), Role: "admin", Department: "IT"},
-			{Username: "user1", Password: string(passwordHash), Role: "user", Department: "Sales"},
-			{Username: "user2", Password: string(passwordHash), Role: "user", Department: "Marketing"},
+			{Username: "admin", Password: string(passwordHash), Role: "admin", Department: "IT", Active: false},
+			{Username: "user1", Password: string(passwordHash), Role: "user", Department: "Sales", Active: false},
+			{Username: "user2", Password: string(passwordHash), Role: "user", Department: "Marketing", Active: false},
 		}
 		db.Create(&users)
 	}
@@ -89,5 +50,14 @@ func populateInitialData(db *gorm.DB) {
 			{NamaProduk: "Produk C", Deskripsi: "Deskripsi Produk C", Harga: 3000, Stok: 20},
 		}
 		db.Create(&products)
+	}
+
+	db.Model(&models.LoggingHistory{}).Count(&count)
+	if count == 0 {
+		// Example data: Populate with a couple of sample records
+		loggingHistoryEntries := []models.LoggingHistory{
+			{UserID: 1, JWT: "aaa", ExpiredDate: time.Now().Add(time.Hour * 24), CreatedDate: time.Now().Add(time.Hour * 24)},
+		}
+		db.Create(&loggingHistoryEntries)
 	}
 }

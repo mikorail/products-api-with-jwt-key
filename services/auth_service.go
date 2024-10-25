@@ -2,8 +2,9 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"os"
-	"strconv"
+	"strings"
 	"time"
 
 	"products-api-with-jwt/models"
@@ -11,23 +12,29 @@ import (
 	global "products-api-with-jwt/global"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/hashicorp/go-memdb"
 	"gorm.io/gorm"
 )
 
 type AuthService struct {
 	DB        *gorm.DB
-	MemDB     *memdb.MemDB // Add MemDB instance to AuthService
 	secretKey string
 }
 
 // NewAuthService menginisialisasi AuthService baru
-func NewAuthService(db *gorm.DB, MemDB *memdb.MemDB) *AuthService {
+func NewAuthService(db *gorm.DB) *AuthService {
 	return &AuthService{
 		DB:        db,
-		MemDB:     MemDB,                          // Add MemDB instance to AuthServic
 		secretKey: os.Getenv(global.ENVSecretKey), // Ganti dengan secret key yang aman
 	}
+}
+
+// GetUserByUsername retrieves a user by their username
+func (s *AuthService) GetUserById(id int) (*models.User, error) {
+	var user models.User
+	if err := s.DB.Where("id = ?", id).First(&user).Error; err != nil {
+		return nil, err // Return error if user not found
+	}
+	return &user, nil
 }
 
 // ValidateCredentials memvalidasi username dan password
@@ -47,8 +54,9 @@ func (s *AuthService) ValidateCredentials(username, password string) (models.Use
 }
 
 // GenerateToken menghasilkan token JWT untuk pengguna
-func (s *AuthService) GenerateToken(username string, expiration time.Duration) (string, error) {
+func (s *AuthService) GenerateToken(id uint, username string, expiration time.Duration) (string, error) {
 	claims := jwt.MapClaims{
+		"user_id":  id,
 		"username": username,
 		"exp":      time.Now().Add(expiration).Unix(),
 	}
@@ -57,32 +65,55 @@ func (s *AuthService) GenerateToken(username string, expiration time.Duration) (
 	return token.SignedString([]byte(s.secretKey))
 }
 
-// StoreTokenInMemDB stores the JWT token for the user in MemDB
-func (as *AuthService) StoreTokenInMemDB(userID int, username string, token string) error {
-	txn := as.MemDB.Txn(true)
-	defer txn.Abort()
+func (s *AuthService) GetRecentLoggingHistory(userID uint64, recentLog *models.LoggingHistory) error {
+	return s.DB.Where("user_id = ?", userID).Order("expired_date desc").First(recentLog).Error
+}
 
-	// Create a new token entry with the user ID
-	newToken := &models.Token{
-		ID:       strconv.Itoa(userID), // Ensure this is a unique ID
-		UserID:   strconv.Itoa(userID), // Store the user ID as a string
-		Username: username,             // Store the username
-		JWT:      token,                // Store the JWT
+func (s *AuthService) CreateLoggingHistory(log *models.LoggingHistory) error {
+	return s.DB.Create(log).Error
+}
+
+func (s *AuthService) UpdateUserActiveStatus(userID uint, active bool) error {
+	result := s.DB.Model(&models.User{}).Where("id = ?", userID).Update("active", active)
+	if result.Error != nil {
+		return result.Error
 	}
 
-	// Check if there is an existing token for the user
-	if existingToken, err := txn.First("token_schemas", "user_id", newToken.UserID); err == nil && existingToken != nil {
-		// Remove existing token
-		if err := txn.Delete("token_schemas", existingToken); err != nil {
-			return err
+	// Check if the update affected any rows (e.g., user not found)
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("no user found with ID %d", userID)
+	}
+
+	return nil
+}
+
+func (as *AuthService) GetUserIDFromToken(authHeader string) (uint, error) {
+	// Parse the token
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+	// Call the function to get user ID from the token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Validate the token's signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		// Return the secret key used for signing
+		return []byte(as.secretKey), nil // Replace with your actual secret key
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	// Extract claims from the token
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		fmt.Println("Token is valid")
+
+		// Assuming user ID is stored as "user_id" in the claims
+		if id, ok := claims["user_id"].(float64); ok {
+			return uint(id), nil
 		}
 	}
 
-	// Insert the new token
-	if err := txn.Insert("token_schemas", newToken); err != nil {
-		return err
-	}
-
-	txn.Commit() // Commit the transaction
-	return nil
+	return 0, fmt.Errorf("user_id claim not found in token")
 }
