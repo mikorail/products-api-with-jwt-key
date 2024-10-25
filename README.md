@@ -1,15 +1,16 @@
-
 # Products API with JWT
 
 ## Overview
 
-The **Products API with JWT** is a RESTful API built using Go (Golang) and the Gin framework. This API allows users to manage products while ensuring secure access through JSON Web Tokens (JWT). It utilizes SQLite as the primary database and MemDB for storing JWT tokens.
+The **Products API with JWT** is a RESTful API built using Go (Golang) and the Gin framework. This API allows users to manage products while ensuring secure access through JSON Web Tokens (JWT). It utilizes SQLite as the primary database and includes functionality for rate limiting and token invalidation upon logout.
 
 ## Features
 
 - User authentication using JWT
 - CRUD operations for managing products
-- Secure endpoints that require authentication
+- Secure endpoints requiring authentication
+- Rate limiting to protect endpoints from excessive requests
+- Token invalidation upon logout, ensuring logged-out JWTs cannot be reused
 - Swagger documentation for easy API exploration
 
 ## Technologies Used
@@ -17,8 +18,8 @@ The **Products API with JWT** is a RESTful API built using Go (Golang) and the G
 - **Go**: The programming language used for building the API.
 - **Gin**: A web framework for Go, used for handling HTTP requests.
 - **GORM**: An ORM for Go, used for interacting with the SQLite database.
-- **MemDB**: An in-memory database used to store JWT tokens.
 - **Swagger**: A tool for documenting and testing APIs.
+- **Rate Limiter**: Built-in rate limiting to prevent abuse of endpoints.
 
 ## Getting Started
 
@@ -27,7 +28,7 @@ The **Products API with JWT** is a RESTful API built using Go (Golang) and the G
 Make sure you have the following installed:
 
 - [Go](https://golang.org/dl/) (version 1.16 or later)
-- A SQLite database (included by default)
+- SQLite database (included by default)
 
 ### Installation
 
@@ -75,6 +76,22 @@ Make sure you have the following installed:
       }
     }
     ```
+
+- **Logout**
+  - **Endpoint**: `/auth/logout`
+  - **Method**: `POST`
+  - **Headers**: `Authorization: Bearer <jwt_token>`
+  - **Response**:
+    ```json
+    {
+      "status": "success",
+      "code": 200,
+      "message": "Logout successful",
+      "data": null
+    }
+    ```
+
+  Upon logout, the JWT is invalidated, ensuring it cannot be reused to access secure endpoints.
 
 #### Products
 
@@ -147,6 +164,19 @@ All product-related endpoints require a valid JWT token in the `Authorization` h
     }
     ```
 
+### Rate Limiting
+
+Rate limiting is enabled on certain endpoints to prevent abuse by limiting the number of requests allowed within a specified timeframe. If the rate limit is exceeded, the following response is returned:
+
+```json
+{
+  "status": "error",
+  "code": 429,
+  "message": "Too many requests, please try again later.",
+  "data": null
+}
+```
+
 ### API Documentation
 
 You can access the Swagger documentation by navigating to `http://localhost:8080/swagger/index.html` in your web browser.
@@ -154,5 +184,3 @@ You can access the Swagger documentation by navigating to `http://localhost:8080
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-```
