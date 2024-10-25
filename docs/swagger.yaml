@@ -42,6 +42,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ApiResponse'
+      security:
+      - BearerAuth: []
       summary: Get all products
       tags:
       - products
@@ -71,6 +73,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ApiResponse'
+      security:
+      - BearerAuth: []
       summary: Create a new product
       tags:
       - products
@@ -98,6 +102,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ApiResponse'
+      security:
+      - BearerAuth: []
       summary: Delete a product by ID
       tags:
       - products
@@ -124,6 +130,8 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/models.ApiResponse'
+      security:
+      - BearerAuth: []
       summary: Get product by ID
       tags:
       - products
@@ -162,6 +170,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ApiResponse'
+      security:
+      - BearerAuth: []
       summary: Update a product by ID
       tags:
       - products

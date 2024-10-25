@@ -17,6 +17,11 @@ const docTemplate = `{
     "paths": {
         "/products": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get a list of all products",
                 "produces": [
                     "application/json"
@@ -41,6 +46,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create a new product with the given details",
                 "consumes": [
                     "application/json"
@@ -87,6 +97,11 @@ const docTemplate = `{
         },
         "/products/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get details of a product by its ID",
                 "produces": [
                     "application/json"
@@ -126,6 +141,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Update a product's information by its ID",
                 "consumes": [
                     "application/json"
@@ -183,6 +203,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Delete a product by its ID",
                 "produces": [
                     "application/json"

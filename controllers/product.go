@@ -19,10 +19,16 @@ func NewProductController(productService *services.ProductService) *ProductContr
 	return &ProductController{ProductService: productService}
 }
 
+// Security definition for Bearer token
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+
 // GetProducts godoc
 // @Summary Get all products
 // @Description Get a list of all products
 // @Tags products
+// @Security BearerAuth
 // @Produce json
 // @Success 200 {object} models.ApiResponse
 // @Failure 500 {object} models.ApiResponse
@@ -52,6 +58,7 @@ func (pc *ProductController) GetProducts(c *gin.Context) {
 // @Summary Get product by ID
 // @Description Get details of a product by its ID
 // @Tags products
+// @Security BearerAuth
 // @Param id path int true "Product ID"
 // @Produce json
 // @Success 200 {object} models.ApiResponse
@@ -93,6 +100,7 @@ func (pc *ProductController) GetProductByID(c *gin.Context) {
 // @Summary Create a new product
 // @Description Create a new product with the given details
 // @Tags products
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param product body models.Product true "Product"
@@ -135,6 +143,7 @@ func (pc *ProductController) CreateProduct(c *gin.Context) {
 // @Summary Update a product by ID
 // @Description Update a product's information by its ID
 // @Tags products
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param id path int true "Product ID"
@@ -190,6 +199,7 @@ func (pc *ProductController) UpdateProduct(c *gin.Context) {
 // @Summary Delete a product by ID
 // @Description Delete a product by its ID
 // @Tags products
+// @Security BearerAuth
 // @Param id path int true "Product ID"
 // @Produce json
 // @Success 200 {object} models.ApiResponse

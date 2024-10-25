@@ -6,6 +6,11 @@
     "paths": {
         "/products": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get a list of all products",
                 "produces": [
                     "application/json"
@@ -30,6 +35,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create a new product with the given details",
                 "consumes": [
                     "application/json"
@@ -76,6 +86,11 @@
         },
         "/products/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get details of a product by its ID",
                 "produces": [
                     "application/json"
@@ -115,6 +130,11 @@
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Update a product's information by its ID",
                 "consumes": [
                     "application/json"
@@ -172,6 +192,11 @@
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Delete a product by its ID",
                 "produces": [
                     "application/json"
