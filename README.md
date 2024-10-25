@@ -155,21 +155,4 @@ You can access the Swagger documentation by navigating to `http://localhost:8080
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Author
-
-Your Name
-
 ```
-
-### Summary
-
-- **Project Title**: Clear and concise.
-- **Overview**: Describes the purpose of the project.
-- **Features**: Lists key functionalities.
-- **Technologies Used**: Provides information about the stack.
-- **Getting Started**: Step-by-step instructions for setup.
-- **API Endpoints**: Detailed documentation for each endpoint.
-- **API Documentation**: Information about accessing Swagger UI.
-- **License and Author**: Basic legal and attribution details.
-
-Feel free to customize the content as necessary to fit your project’s specifics!
